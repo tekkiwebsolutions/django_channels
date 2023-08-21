@@ -1,0 +1,168 @@
+{% extends 'base/base.html' %}
+
+{% block title%}Chatting{% endblock%}
+
+{% block content%}
+<div class="container mx-auto" >
+<p>You are {{request.user.username}}<p>
+<div name='prev-groups-wrapper' class='flex flex-auto space-x-3'>
+    {% for group in prev_groups %}
+    <div class="max-w-sm rounded overflow-hidden shadow-lg bg-sky-700">
+        <div>
+            <div class="px-6 py-4">
+            <div class="flex flex-auto space-x-3">
+                <div class="font-bold text-xl m-px">{{group.name}}</div>
+                <a href="{% url 'group_chat' group.name %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded p-2">Enter</a>
+            </div>
+            <p class="text-gray-700 text-base">No Description</p>
+            </div>
+            <div class="px-6 pt-4 pb-2">
+            {% for user in group.users.all%}
+                <span class="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">{{user.username}}</span>
+                {% if user.activity.status == 'online' %}
+                    <p class='text-lime-500' name='user-status-{{user.username}}' >
+                {% elif user.activity.status == 'offline' %}
+                    <p class='text-red-600' name='user-status-{{user.username}}' >
+                {% else %}
+                <p class='text-yellow-500' name='user-status-{{user.username}}' >
+                {% endif %}
+                {{user.activity.status}}</p>
+            {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endfor%}
+</div>
+</div>
+
+
+<div class="p-10 lg:p-20 text-center">
+    <h1 class="text-3xl lg:text-6xl text-white">
+        Create a new group
+    </h1>
+</div>
+
+<div class='flex '>
+    <form method='post'>
+        {% csrf_token %}
+    <div>
+        <label>Group Name</label>
+        <input oninput='groupNamehandler(event)' name='group-name' type='text' />
+    </div>
+    <button type="button" onclick='addUsersDropdown()'
+     class="px-5 py-3 rounded-xl text-white bg-teal-700 hover:bg-teal-700 hover:bg-sky-700"
+    id='add-users'>Add Users</button>
+    <div id="add-users-dropdown" class="hidden z-10 bg-white divide-y divide-gray-100 rounded shadow w-44 dark:bg-gray-700">
+        <ul class="py-1 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+            {% for user in users %}
+            <li>
+              <p onclick='addUserHandler("{{user.username}}")' class="block px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-600 dark:hover:text-white">{{user.username}}</p>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div id='selected-users'>    
+    </div>
+    <div name='create-group'></div>
+    <input type='hidden' name='added-users-list' />
+    <button  type='submit' id='submit-handler' class='rounded-xl text-white bg-teal-700' 
+            onclick="submitHandler()">
+            Create Group</button>
+    </form>
+</div>
+<div name='show-errors'> 
+
+    {% for error in errors%}
+    <p> {{error}}</p>
+    {% endfor %}
+</div>
+
+
+
+
+
+<script>
+    let addedUsers = []
+    function addUserHandler(user){
+        console.log('addUserHandler')
+        console.log(user)
+        html = `<p name='${user}'>${user}</p>`
+        if (!document.querySelector(`p[name=${user}]`)){
+            addedUsers.push(user)
+            document.querySelector('div[id=selected-users]').innerHTML += html
+        } else {
+            addedUsers.splice(addedUsers.indexOf(user), 1) 
+            document.querySelector(`p[name=${user}]`).remove()
+        }
+        console.log(addedUsers)
+        let groupName = document.querySelector(`input[name=group-name]`).value
+        let errorHTML = null 
+        if (groupName.length < 5 ){
+            errorHTML = `<p name='error1' class='tg-red'>Group name is too short<p>`
+            if (!document.querySelector('p[name=error1]')){
+                document.querySelector('div[name=show-errors]').innerHTML += errorHTML
+            }
+        } else {
+            document.querySelector('p[name=error1]') && document.querySelector('p[name=error1]').remove()
+        }
+        if (addedUsers.length < 2 ){
+            errorHTML = `<p name='error2' class='tg-red'>Please Select 2 or more than 2 users to create a group<p>`
+            if (!document.querySelector('p[name=error2]')){
+                console.log('user_err')
+                document.querySelector('div[name=show-errors]').innerHTML += errorHTML
+            }
+        } else {
+            document.querySelector('p[name=error2]') && document.querySelector('p[name=error2]').remove()
+        }
+        if (addedUsers.length >= 2 && groupName.length >= 5){
+            addedUsersJson = JSON.stringify(addedUsers)
+            document.querySelector("input[name=added-users-list]").value = addedUsersJson
+           
+        } else {
+            console.log('hehehe')
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+          const cookies = document.cookie.split(";");
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + "=")) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+
+    function submitHandler (addedUsers, groupName){
+        addedUsers = JSON.parse(addedUsers)
+        console.log(addedUsers, groupName)
+
+
+    }
+
+
+    function groupNamehandler(e){
+        console.log(event)
+        groupName = event.target.value
+         if (groupName.length < 5 ){
+            errorHTML = `<p name='error1' class='tg-red'>Group name is too short<p>`
+            if (!document.querySelector('p[name=error1]')){
+                document.querySelector('div[name=show-errors]').innerHTML += errorHTML
+            }
+        } else {
+            document.querySelector('p[name=error1]') && document.querySelector('p[name=error1]').remove()
+        }
+    }
+    
+    function addUsersDropdown () {
+        console.log('dropdown')
+        document.querySelector('div[id=add-users-dropdown]').classList.toggle('hidden');
+    }
+</script>
+
+{% endblock %}

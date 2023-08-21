@@ -1,0 +1,33 @@
+{% extends 'base/base.html' %}
+
+{% block title%}Chatting{% endblock%}
+
+{% block content%}
+<div class='class=bg-black flex justify-center px-5 py-5'>
+    <a href='/groups/' class="px-5 py-3 rounded-xl text-white bg-sky-700 hover:bg-sky-800">Group Chat</a>
+</div>
+<div class="p-10 lg:p-20 text-center">
+    <h1 class="text-3xl lg:text-6xl text-white">
+        Chat with Users
+    </h1>
+</div>
+
+<div class='w-full flex flex-wrap items-center'>
+    {% for user in users %}
+        <div class='w-full lg:w-1/4 px-3 py-3'>
+            <div class='p4 bg-white shadow rounded-xl text-center'>
+                <h2 class='mb-5 text-2xl font-semibold'>{{user.username}}-->{{request.user.username}}</h2>
+                <a href='{% url "chat" user.username request.user.username %}' class='px-5 py-3 block rounded-xl text-white bg-teal-600 hover:bg-teal-700'>Chat</a>
+                {% if user.activity.status == 'online' %}
+                    <p class='text-lime-500' name='user-status-{{user.username}}' >
+                   {% elif user.activity.status == 'offline' %}
+                   <p class='text-red-600' name='user-status-{{user.username}}' >
+                    {% else %}
+                   <p class='text-yellow-500' name='user-status-{{user.username}}' >
+                {% endif %}
+                {{user.activity.status}}</p>
+        </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
